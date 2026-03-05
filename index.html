@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visor 3D - White Mesh</title>
+    <title>White Mesh 3D Viewer</title>
     <style>
         * {
             margin: 0;
@@ -13,83 +13,180 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
         }
-        
-        #canvas-container {
+
+        /* ===== PANTALLA DE INICIO ===== */
+        #landing {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+            transition: opacity 0.3s ease;
+        }
+
+        #landing h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #landing p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        #showViewerBtn {
+            background: white;
+            color: #764ba2;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        #showViewerBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        #showViewerBtn:active {
+            transform: translateY(-1px);
+        }
+
+        /* ===== VISOR 3D ===== */
+        #viewer-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
+            z-index: 10;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
             display: block;
         }
-        
-        #info {
+
+        /* ===== CONTROLES FLOTANTES ===== */
+        #viewer-controls {
             position: absolute;
             top: 20px;
             left: 20px;
-            color: white;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #764ba2;
+            border: none;
+            padding: 10px 20px;
             border-radius: 8px;
-            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 13px;
             backdrop-filter: blur(10px);
-            z-index: 100;
+            z-index: 20;
         }
-        
-        #info h1 {
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-        
-        #info p {
-            margin: 4px 0;
-            opacity: 0.9;
-        }
-        
-        #loading {
+
+        #loading, #error {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            font-size: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 30px 50px;
-            border-radius: 10px;
-            display: none;
-            z-index: 200;
-        }
-        
-        #error {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ff6b6b;
-            font-size: 16px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 30px 50px;
-            border-radius: 10px;
-            display: none;
-            z-index: 200;
-            max-width: 80%;
+            padding: 25px 40px;
+            border-radius: 12px;
             text-align: center;
+            z-index: 30;
+            display: none;
+        }
+
+        #loading {
+            background: rgba(255, 255, 255, 0.95);
+            color: #764ba2;
+            font-weight: 500;
+        }
+
+        #error {
+            background: rgba(255, 107, 107, 0.95);
+            color: white;
+            max-width: 80%;
+        }
+
+        /* Animación de entrada */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
         }
     </style>
 </head>
 <body>
-    <div id="info">
-        <h1>🎨 Visor 3D</h1>
-        <p>🖱️ Arrastra para rotar</p>
-        <p>🔍 Scroll para zoom</p>
-        <p>📱 Modelo: white_mesh.obj</p>
-    </div>
-    
-    <div id="loading">Cargando modelo 3D...</div>
-    <div id="error"></div>
-    
-    <div id="canvas-container"></div>
 
+    <!-- ===== PANTALLA DE INICIO ===== -->
+    <div id="landing">
+        <h1>🎨 White Mesh 3D</h1>
+        <p>Explora el modelo tridimensional interactivo. Usa el ratón para rotar, hacer zoom y mover la cámara.</p>
+        <button id="showViewerBtn">🔍 Ver Modelo 3D</button>
+    </div>
+
+    <!-- ===== VISOR 3D (oculto al inicio) ===== -->
+    <div id="viewer-container">
+        <div id="canvas-container"></div>
+        
+        <div id="viewer-controls">
+            <button id="backBtn" class="control-btn">← Volver</button>
+            <button id="resetBtn" class="control-btn">🔄 Reset Vista</button>
+        </div>
+        
+        <div id="info">
+            🖱️ Arrastra: rotar • 🔍 Scroll: zoom • ⇆ Click derecho: mover
+        </div>
+        
+        <div id="loading">Cargando modelo 3D...</div>
+        <div id="error"></div>
+    </div>
+
+    <!-- Importmap para Three.js -->
     <script type="importmap">
     {
         "imports": {
@@ -104,16 +201,52 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
-        // Variables globales
-        let scene, camera, renderer, controls;
-        let model;
+        // Variables
+        let scene, camera, renderer, controls, model;
+        let isViewerActive = false;
 
-        // Inicializar escena
-        function init() {
+        // Elementos del DOM
+        const landing = document.getElementById('landing');
+        const viewerContainer = document.getElementById('viewer-container');
+        const showViewerBtn = document.getElementById('showViewerBtn');
+        const backBtn = document.getElementById('backBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+
+        // ===== EVENTOS DE BOTONES =====
+        showViewerBtn.addEventListener('click', () => {
+            landing.style.display = 'none';
+            viewerContainer.style.display = 'block';
+            viewerContainer.classList.add('fade-in');
+            
+            if (!isViewerActive) {
+                initViewer();
+                isViewerActive = true;
+            }
+        });
+
+        backBtn.addEventListener('click', () => {
+            viewerContainer.style.display = 'none';
+            landing.style.display = 'flex';
+            landing.classList.add('fade-in');
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (camera && controls) {
+                camera.position.set(5, 5, 5);
+                camera.lookAt(0, 0, 0);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
+        });
+
+        // ===== INICIALIZAR VISOR 3D =====
+        function initViewer() {
             // Escena
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1e3c72);
-            scene.fog = new THREE.Fog(0x1e3c72, 10, 50);
+            scene.background = new THREE.Color(0x2a2a4a);
+            scene.fog = new THREE.Fog(0x2a2a4a, 15, 40);
 
             // Cámara
             camera = new THREE.PerspectiveCamera(
@@ -123,84 +256,70 @@
                 1000
             );
             camera.position.set(5, 5, 5);
-            camera.lookAt(0, 0, 0);
 
             // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             // Controles
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.screenSpacePanning = false;
-            controls.minDistance = 1;
-            controls.maxDistance = 20;
+            controls.minDistance = 2;
+            controls.maxDistance = 30;
 
             // Luces
             setupLights();
 
-            // Grid de ayuda
-            const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
-            scene.add(gridHelper);
+            // Grid decorativo
+            const grid = new THREE.GridHelper(20, 20, 0x555577, 0x333355);
+            grid.position.y = -2;
+            scene.add(grid);
 
             // Cargar modelo
             loadModel();
 
-            // Event listeners
+            // Resize
             window.addEventListener('resize', onWindowResize);
+
+            // Animación
+            animate();
         }
 
         function setupLights() {
-            // Luz ambiental
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambientLight);
-
-            // Luz direccional principal (sol)
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            
             const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-            dirLight.position.set(10, 10, 10);
+            dirLight.position.set(10, 15, 10);
             dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 2048;
-            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.mapSize.set(2048, 2048);
             scene.add(dirLight);
 
-            // Luz direccional secundaria
-            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-            dirLight2.position.set(-10, 5, -10);
-            scene.add(dirLight2);
-
-            // Luz puntual
-            const pointLight = new THREE.PointLight(0x4488ff, 0.5);
-            pointLight.position.set(0, 5, 0);
-            scene.add(pointLight);
+            const fillLight = new THREE.DirectionalLight(0x88aaff, 0.4);
+            fillLight.position.set(-10, 5, -10);
+            scene.add(fillLight);
         }
 
         function loadModel() {
-            const loadingEl = document.getElementById('loading');
-            const errorEl = document.getElementById('error');
-            
             loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
 
             const loader = new OBJLoader();
             
-            // Cargar el archivo OBJ (ruta relativa al mismo directorio)
             loader.load(
-                './white_mesh.obj',
-                // Callback de éxito
-                function (object) {
+                './white_mesh.obj', // ← Ruta relativa al mismo directorio
+                (object) => {
                     model = object;
                     
-                    // Configurar el material
-                    object.traverse(function (child) {
+                    object.traverse((child) => {
                         if (child.isMesh) {
                             child.material = new THREE.MeshStandardMaterial({
-                                color: 0xffffff,
-                                metalness: 0.3,
-                                roughness: 0.7,
+                                color: 0xf0f0f0,
+                                metalness: 0.2,
+                                roughness: 0.6,
                                 side: THREE.DoubleSide
                             });
                             child.castShadow = true;
@@ -208,50 +327,44 @@
                         }
                     });
 
-                    // Centrar y escalar el modelo
+                    // Centrar modelo
                     const box = new THREE.Box3().setFromObject(object);
                     const center = box.getCenter(new THREE.Vector3());
                     const size = box.getSize(new THREE.Vector3());
                     
-                    // Mover el modelo al centro
                     object.position.sub(center);
                     
-                    // Escalar si es necesario
+                    // Escalar automáticamente
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    if (maxDim > 5) {
-                        const scale = 5 / maxDim;
-                        object.scale.setScalar(scale);
+                    if (maxDim > 6) {
+                        object.scale.setScalar(6 / maxDim);
                     }
                     
-                    // Añadir a la escena
                     scene.add(object);
-                    
                     loadingEl.style.display = 'none';
-                    console.log('✅ Modelo cargado correctamente');
+                    console.log('✅ Modelo cargado');
                 },
-                // Callback de progreso
-                function (xhr) {
+                (xhr) => {
                     if (xhr.total > 0) {
-                        const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
+                        const percent = Math.round((xhr.loaded / xhr.total) * 100);
                         loadingEl.textContent = `Cargando: ${percent}%`;
-                        console.log(`${percent}% completado`);
                     }
                 },
-                // Callback de error
-                function (error) {
+                (error) => {
                     loadingEl.style.display = 'none';
                     errorEl.style.display = 'block';
                     errorEl.innerHTML = `
-                        <strong>❌ Error al cargar el modelo</strong><br><br>
-                        ${error.message}<br><br>
-                        <small>Asegúrate de que white_mesh.obj existe en el mismo directorio que index.html</small>
+                        <strong>❌ No se pudo cargar el modelo</strong><br><br>
+                        <small>${error.message}</small><br><br>
+                        <small>Verifica que <code>white_mesh.obj</code> esté en la misma carpeta que este archivo.</small>
                     `;
-                    console.error('Error cargando el modelo:', error);
+                    console.error('Error:', error);
                 }
             );
         }
 
         function onWindowResize() {
+            if (!camera || !renderer) return;
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -259,13 +372,11 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
+            if (controls) controls.update();
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
         }
-
-        // Iniciar
-        init();
-        animate();
     </script>
 </body>
 </html>
